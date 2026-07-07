@@ -789,3 +789,8 @@ body.authenticated.sidebar-active {
   overflow: hidden;
 }
 
+.hidden {
+  display: none !important;
+}
+
+

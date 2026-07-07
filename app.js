@@ -74,8 +74,8 @@ function switchAuthTab(tab) {
 
 async function handleLogin(e) {
   e.preventDefault();
-  const email = val('login-email');
-  const password = val('login-password');
+  const email = gv('login-email');
+  const password = gv('login-password');
   try {
     const res = await POST('/api/auth/login', { email, password });
     localStorage.setItem('token', res.token);
@@ -98,9 +98,9 @@ async function handleLogin(e) {
 
 async function handleSignup(e) {
   e.preventDefault();
-  const name = val('signup-name');
-  const email = val('signup-email');
-  const password = val('signup-password');
+  const name = gv('signup-name');
+  const email = gv('signup-email');
+  const password = gv('signup-password');
   try {
     const res = await POST('/api/auth/signup', { name, email, password });
     localStorage.setItem('token', res.token);
