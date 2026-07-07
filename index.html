@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Admission Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-required">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     AUTHENTICATION PAGE OVERLAY
+═══════════════════════════════════════════════════════════════ -->
+<div id="auth-overlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+      <h2>Admission Portal</h2>
+    </div>
+    
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" class="form-control" id="login-email" required placeholder="name@school.edu">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" class="form-control" id="login-password" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:10px;">Sign In</button>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="signup-form" class="hidden" onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" class="form-control" id="signup-name" required placeholder="Admin Name">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" class="form-control" id="signup-email" required placeholder="name@school.edu">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" class="form-control" id="signup-password" required placeholder="Min 6 characters">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:10px;">Create Account</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+    <span class="brand-name" id="sidebar-brand-name">Admission Portal</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="#" class="nav-link active" data-view="dashboard">
+      <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-link" data-view="crm">
+      <i class="fa-solid fa-users"></i><span>CRM Board</span>
+    </a>
+    <a href="#" class="nav-link" data-view="leads-list">
+      <i class="fa-solid fa-address-book"></i><span>All Contacts</span>
+    </a>
+    <a href="#" class="nav-link" data-view="campaigns">
+      <i class="fa-solid fa-bullhorn"></i><span>Lead Campaigns</span>
+    </a>
+    <a href="#" class="nav-link" data-view="tasks">
+      <i class="fa-solid fa-list-check"></i><span>Tasks</span>
+    </a>
+    <a href="#" class="nav-link" data-view="content">
+      <i class="fa-solid fa-calendar-days"></i><span>Content Calendar</span>
+    </a>
+
+    <div class="nav-section-label" style="margin-top:16px;">Reports</div>
+    <a href="#" class="nav-link" data-view="analytics">
+      <i class="fa-solid fa-chart-pie"></i><span>Analytics</span>
+    </a>
+    <a href="#" class="nav-link" data-view="staff">
+      <i class="fa-solid fa-user-tie"></i><span>Staff Review</span>
+    </a>
+    <a href="#" class="nav-link" data-view="brand">
+      <i class="fa-solid fa-bullseye"></i><span>Brand</span>
+    </a>
+
+    <div class="nav-section-label" style="margin-top:16px;">Admin</div>
+    <a href="#" class="nav-link" data-view="settings">
+      <i class="fa-solid fa-gear"></i><span>Settings</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-avatar" id="sidebar-avatar">A</div>
+    <div class="sidebar-footer-info">
+      <div class="sidebar-biz-name" id="sidebar-biz-name">My Institution</div>
+      <div class="sidebar-biz-type" id="sidebar-biz-type">Education / School</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════════════ -->
+<div class="main-wrapper">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle sidebar">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="topbar-search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="global-search" placeholder="Search contacts, campaigns, tasks…">
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="handleLogout()" style="margin-right:10px;"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="topbar-avatar">A</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page container -->
+  <div class="page-container">
+
+  <!-- ════════════════════  DASHBOARD  ════════════════════ -->
+  <section class="view" id="view-dashboard">
+    <div class="view-header">
+      <div>
+        <h1 id="dash-heading">Dashboard</h1>
+        <p id="dash-sub" class="view-sub">Welcome back. Here's your live overview.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAddLead()">
+        <i class="fa-solid fa-plus"></i> Add Contact
+      </button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-left">
+          <div class="kpi-icon c-orange"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <p class="kpi-label">Total Contacts</p>
+            <h2 class="kpi-value" id="kpi-total">0</h2>
+          </div>
+        </div>
+        <div class="kpi-badge" id="kpi-total-badge">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-left">
+          <div class="kpi-icon c-blue"><i class="fa-solid fa-calendar-check"></i></div>
+          <div>
+            <p class="kpi-label">In Progress</p>
+            <h2 class="kpi-value" id="kpi-visits">0</h2>
+          </div>
+        </div>
+        <div class="kpi-badge" id="kpi-visits-badge">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-left">
+          <div class="kpi-icon c-green"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <p class="kpi-label">Converted</p>
+            <h2 class="kpi-value" id="kpi-enrolled">0</h2>
+          </div>
+        </div>
+        <div class="kpi-badge" id="kpi-enrolled-badge">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-left">
+          <div class="kpi-icon c-purple"><i class="fa-solid fa-percent"></i></div>
+          <div>
+            <p class="kpi-label">Conversion Rate</p>
+            <h2 class="kpi-value" id="kpi-conv">0%</h2>
+          </div>
+        </div>
+        <div class="kpi-badge" id="kpi-conv-badge">—</div>
+      </div>
+    </div>
+
+    <!-- AI insight -->
+    <div class="ai-box" id="ai-box">
+      <div class="ai-box-icon"><i class="fa-solid fa-microchip"></i></div>
+      <div class="ai-box-body">
+        <p class="ai-box-label">AI Growth Insight</p>
+        <p class="ai-box-text" id="ai-text">Fetching live insights…</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="fetchAI()"><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+
+    <!-- Charts row -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head">
+          <h3>Pipeline Funnel</h3>
+          <span class="card-sub" id="funnel-total-label">0 contacts total</span>
+        </div>
+        <div class="chart-box"><canvas id="funnelChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Target Progress</h3>
+          <button class="btn btn-ghost btn-sm" onclick="nav('settings')">Edit Target</button>
+        </div>
+        <div class="ring-wrap">
+          <canvas id="ringCanvas" width="160" height="160"></canvas>
+          <div class="ring-center">
+            <span class="ring-pct" id="ring-pct">0%</span>
+            <span class="ring-sub">Achieved</span>
+          </div>
+        </div>
+        <p class="ring-detail" id="ring-detail">0 / 0 goal</p>
+      </div>
+    </div>
+
+    <!-- Tasks quick-view -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head">
+        <h3>Today's Tasks</h3>
+        <button class="btn btn-ghost btn-sm" onclick="nav('tasks')">View All</button>
+      </div>
+      <div id="dash-tasks-list"><div class="empty-state-mini">No tasks yet — <button class="inline-link" onclick="nav('tasks')">add one</button></div></div>
+    </div>
+  </section>
+
+  <!-- ════════════════════  CRM KANBAN  ════════════════════ -->
+  <section class="view hidden" id="view-crm">
+    <div class="view-header">
+      <div>
+        <h1>CRM Board</h1>
+        <p class="view-sub">Drag contacts between stages to update their pipeline status.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAddLead()">
+        <i class="fa-solid fa-plus"></i> Add Contact
+      </button>
+    </div>
+    <div class="kanban" id="kanban">
+      <div class="kanban-col" data-status="inquiry">
+        <div class="kanban-col-head">
+          <span class="kanban-dot c-orange"></span>
+          <h4>Inquiry</h4>
+          <span class="kanban-count" id="cnt-inquiry">0</span>
+        </div>
+        <div class="kanban-cards" id="kcol-inquiry"></div>
+        <button class="kanban-add-btn" onclick="openLeadModalForStatus('inquiry')"><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+      <div class="kanban-col" data-status="contacted">
+        <div class="kanban-col-head">
+          <span class="kanban-dot c-blue"></span>
+          <h4>Contacted</h4>
+          <span class="kanban-count" id="cnt-contacted">0</span>
+        </div>
+        <div class="kanban-cards" id="kcol-contacted"></div>
+        <button class="kanban-add-btn" onclick="openLeadModalForStatus('contacted')"><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+      <div class="kanban-col" data-status="visit-scheduled">
+        <div class="kanban-col-head">
+          <span class="kanban-dot c-yellow"></span>
+          <h4>Meeting Booked</h4>
+          <span class="kanban-count" id="cnt-visit-scheduled">0</span>
+        </div>
+        <div class="kanban-cards" id="kcol-visit-scheduled"></div>
+        <button class="kanban-add-btn" onclick="openLeadModalForStatus('visit-scheduled')"><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+      <div class="kanban-col" data-status="registered">
+        <div class="kanban-col-head">
+          <span class="kanban-dot c-purple"></span>
+          <h4>Proposal Sent</h4>
+          <span class="kanban-count" id="cnt-registered">0</span>
+        </div>
+        <div class="kanban-cards" id="kcol-registered"></div>
+        <button class="kanban-add-btn" onclick="openLeadModalForStatus('registered')"><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+      <div class="kanban-col" data-status="enrolled">
+        <div class="kanban-col-head">
+          <span class="kanban-dot c-green"></span>
+          <h4>Converted</h4>
+          <span class="kanban-count" id="cnt-enrolled">0</span>
+        </div>
+        <div class="kanban-cards" id="kcol-enrolled"></div>
+        <button class="kanban-add-btn" onclick="openLeadModalForStatus('enrolled')"><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════  ALL CONTACTS (TABLE)  ════════════════════ -->
+  <section class="view hidden" id="view-leads-list">
+    <div class="view-header">
+      <div>
+        <h1>All Contacts</h1>
+        <p class="view-sub">Full list of every contact in your pipeline.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAddLead()">
+        <i class="fa-solid fa-plus"></i> Add Contact
+      </button>
+    </div>
+    <div class="card">
+      <div class="table-toolbar">
+        <input type="text" class="table-search" id="leads-search" placeholder="Filter contacts…" oninput="filterLeadsTable()">
+        <select class="form-select" id="leads-status-filter" onchange="filterLeadsTable()">
+          <option value="">All Stages</option>
+          <option value="inquiry">Inquiry</option>
+          <option value="contacted">Contacted</option>
+          <option value="visit-scheduled">Meeting Booked</option>
+          <option value="registered">Proposal Sent</option>
+          <option value="enrolled">Converted</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Secondary Info</th><th>Category</th><th>Phone</th><th>Email</th><th>Stage</th><th>Priority</th><th>Date</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="leads-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="leads-empty" style="display:none;">
+          <i class="fa-regular fa-address-book"></i>
+          <h3>No contacts yet</h3>
+          <p>Start building your pipeline by adding your first contact.</p>
+          <button class="btn btn-primary" onclick="openAddLead()"><i class="fa-solid fa-plus"></i> Add First Contact</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════  CAMPAIGNS  ════════════════════ -->
+  <section class="view hidden" id="view-campaigns">
+    <div class="view-header">
+      <div>
+        <h1>Lead Campaigns</h1>
+        <p class="view-sub">Track every paid or organic marketing campaign.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('campaign-modal')">
+        <i class="fa-solid fa-plus"></i> Add Campaign
+      </button>
+    </div>
+
+    <!-- ROI Calculator -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-head"><h3>ROI Simulator</h3></div>
+      <div class="roi-grid">
+        <div class="form-group">
+          <label>Budget ($)</label>
+          <input type="number" class="form-control" id="roi-budget" value="" placeholder="e.g. 5000" oninput="calcROI()">
+        </div>
+        <div class="form-group">
+          <label>Cost Per Lead ($)</label>
+          <input type="number" class="form-control" id="roi-cpl" value="" placeholder="e.g. 15" oninput="calcROI()">
+        </div>
+        <div class="form-group">
+          <label>Conversion Rate (%)</label>
+          <input type="number" class="form-control" id="roi-conv" value="" placeholder="e.g. 10" oninput="calcROI()">
+        </div>
+        <div class="roi-result">
+          <div class="roi-stat"><span>Est. Leads</span><strong id="roi-out-leads">—</strong></div>
+          <div class="roi-stat"><span>Est. Deals</span><strong id="roi-out-deals">—</strong></div>
+          <div class="roi-stat"><span>Cost / Deal</span><strong id="roi-out-cpa">—</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="campaigns-grid" id="campaigns-grid">
+      <!-- Cards rendered by JS -->
+    </div>
+    <div class="empty-state" id="campaigns-empty" style="display:none;">
+      <i class="fa-solid fa-bullhorn"></i>
+      <h3>No campaigns yet</h3>
+      <p>Add your first marketing campaign to start tracking ROI.</p>
+      <button class="btn btn-primary" onclick="openModal('campaign-modal')"><i class="fa-solid fa-plus"></i> Add Campaign</button>
+    </div>
+  </section>
+
+  <!-- ════════════════════  TASKS  ════════════════════ -->
+  <section class="view hidden" id="view-tasks">
+    <div class="view-header">
+      <div>
+        <h1>Tasks</h1>
+        <p class="view-sub">Track every action item and follow-up.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('task-modal')">
+        <i class="fa-solid fa-plus"></i> Add Task
+      </button>
+    </div>
+    <div class="card">
+      <div class="table-toolbar">
+        <select class="form-select" id="task-priority-filter" onchange="renderTasks()">
+          <option value="">All Priorities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select class="form-select" id="task-status-filter" onchange="renderTasks()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="done">Completed</option>
+        </select>
+      </div>
+      <div class="task-list" id="tasks-list"></div>
+      <div class="empty-state" id="tasks-empty" style="display:none;">
+        <i class="fa-solid fa-list-check"></i>
+        <h3>No tasks yet</h3>
+        <p>Add tasks to track follow-ups and daily actions.</p>
+        <button class="btn btn-primary" onclick="openModal('task-modal')"><i class="fa-solid fa-plus"></i> Add Task</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════  CONTENT CALENDAR  ════════════════════ -->
+  <section class="view hidden" id="view-content">
+    <div class="view-header">
+      <div>
+        <h1>Content Calendar</h1>
+        <p class="view-sub">Plan and schedule your marketing content.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('content-modal')">
+        <i class="fa-solid fa-plus"></i> Schedule Content
+      </button>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><h3 id="cal-month-label">July 2026</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="prevMonth()"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="btn btn-ghost btn-sm" onclick="nextMonth()"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>All Scheduled Content</h3></div>
+        <div id="content-list"></div>
+        <div class="empty-state" id="content-empty" style="display:none;">
+          <i class="fa-solid fa-calendar-plus"></i>
+          <h3>No content scheduled</h3>
+          <p>Start planning your content calendar.</p>
+          <button class="btn btn-primary" onclick="openModal('content-modal')"><i class="fa-solid fa-plus"></i> Schedule</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════  ANALYTICS  ════════════════════ -->
+  <section class="view hidden" id="view-analytics">
+    <div class="view-header">
+      <div><h1>Analytics</h1><p class="view-sub">Deep-dive into your growth metrics.</p></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><h3>Leads by Source</h3></div>
+        <div class="chart-box"><canvas id="sourceChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Pipeline Stage Breakdown</h3></div>
+        <div class="chart-box"><canvas id="pipelineChart"></canvas></div>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div class="card">
+        <div class="card-head"><h3>Campaign Spend vs Leads</h3></div>
+        <div class="chart-box"><canvas id="campChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Priority Distribution</h3></div>
+        <div class="chart-box"><canvas id="priorityChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════  STAFF REVIEW  ════════════════════ -->
+  <section class="view hidden" id="view-staff">
+    <div class="view-header">
+      <div><h1>Staff Review</h1><p class="view-sub">Monitor team performance and conversion rates.</p></div>
+      <button class="btn btn-primary" onclick="openModal('staff-modal')"><i class="fa-solid fa-plus"></i> Add Staff</button>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Team Leaderboard</h3></div>
+      <div id="staff-list"></div>
+      <div class="empty-state" id="staff-empty" style="display:none;">
+        <i class="fa-solid fa-users-gear"></i>
+        <h3>No staff members yet</h3>
+        <p>Add team members to track their performance.</p>
+        <button class="btn btn-primary" onclick="openModal('staff-modal')"><i class="fa-solid fa-plus"></i> Add Staff Member</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════  BRAND POSITIONING  ════════════════════ -->
+  <section class="view hidden" id="view-brand">
+    <div class="view-header">
+      <div><h1>Brand Positioning</h1><p class="view-sub">Define your USPs and messaging.</p></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><h3>Core USPs</h3></div>
+        <p class="form-hint">Document your 3 strongest competitive advantages.</p>
+        <div class="form-group"><label>USP 1</label><input type="text" class="form-control" id="usp1" placeholder="e.g. Fastest response time in market"></div>
+        <div class="form-group"><label>USP 2</label><input type="text" class="form-control" id="usp2" placeholder="e.g. All-in-one platform with zero hidden fees"></div>
+        <div class="form-group"><label>USP 3</label><input type="text" class="form-control" id="usp3" placeholder="e.g. Dedicated coordinator for every lead"></div>
+        <button class="btn btn-primary" onclick="saveUSPs()">Save USPs</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Core Pitch / Tagline</h3></div>
+        <p class="form-hint">Your elevator pitch shown across sales scripts.</p>
+        <div class="form-group">
+          <label>Tagline</label>
+          <input type="text" class="form-control" id="brand-tagline" placeholder="e.g. We help institutions grow 30% faster.">
+        </div>
+        <div class="form-group">
+          <label>Full Pitch (for call scripts)</label>
+          <textarea class="form-control" id="brand-pitch" rows="5" placeholder="Write your full pitch script here…"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="savePitch()">Save Pitch</button>
+        <div class="card" style="margin-top:16px; background:var(--bg-2);">
+          <p class="card-head" style="font-size:13px; font-weight:600;">Saved Pitch Preview</p>
+          <p style="font-size:13px; line-height:1.7;" id="pitch-preview"><em>No pitch saved yet.</em></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════  SETTINGS  ════════════════════ -->
+  <section class="view hidden" id="view-settings">
+    <div class="view-header">
+      <div><h1>Settings</h1><p class="view-sub">Configure your business profile and system preferences.</p></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><h3>Admission Profile</h3></div>
+        <form id="settings-form" onsubmit="saveSettings(event)">
+          <div class="form-group">
+            <label>Institution / Business Name *</label>
+            <input type="text" class="form-control" id="s-biz-name" required placeholder="e.g. Springdale Academy">
+          </div>
+          <div class="form-group">
+            <label>Industry / Portal Type</label>
+            <select class="form-control" id="s-biz-type">
+              <option value="school">Education / School</option>
+              <option value="general">General Business</option>
+              <option value="saas">SaaS / Software</option>
+              <option value="realestate">Real Estate</option>
+              <option value="consulting">Consulting / Agency</option>
+              <option value="ecommerce">E-Commerce</option>
+              <option value="healthcare">Healthcare</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Annual Target (number)</label>
+            <input type="number" class="form-control" id="s-target" placeholder="e.g. 300">
+          </div>
+          <div class="form-group">
+            <label>Currency</label>
+            <select class="form-control" id="s-currency">
+              <option value="USD">USD ($)</option>
+              <option value="INR">INR (₹)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>NPS Score (0–100)</label>
+            <div class="nps-row">
+              <input type="range" min="0" max="100" id="s-nps" value="0" oninput="document.getElementById('s-nps-val').textContent=this.value">
+              <span class="nps-val" id="s-nps-val">0</span>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">Save Settings</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Danger Zone</h3></div>
+        <p class="form-hint" style="color:var(--danger);">These actions permanently delete data from your database.</p>
+        <div class="danger-row">
+          <div>
+            <strong>Clear All Contacts</strong>
+            <p>Permanently delete every contact in the pipeline.</p>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="confirmClear('leads')">Delete All</button>
+        </div>
+        <div class="danger-row">
+          <div>
+            <strong>Clear All Campaigns</strong>
+            <p>Permanently delete every marketing campaign.</p>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="confirmClear('campaigns')">Delete All</button>
+        </div>
+        <div class="danger-row">
+          <div>
+            <strong>Clear All Tasks</strong>
+            <p>Permanently delete every task.</p>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="confirmClear('tasks')">Delete All</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /page-container -->
+</div><!-- /main-wrapper -->
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════════════ -->
+
+<!-- Lead/Contact Modal -->
+<dialog class="modal" id="lead-modal">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h2 id="lead-modal-title">Add Contact</h2>
+      <button class="modal-close" onclick="closeModal('lead-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="lead-form" onsubmit="submitLead(event)">
+      <input type="hidden" id="lf-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" class="form-control" id="lf-name" required placeholder="Contact / parent name">
+        </div>
+        <div class="form-group">
+          <label>Secondary Info</label>
+          <input type="text" class="form-control" id="lf-secondary" placeholder="Company / child name / property ID">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category / Grade / Tier</label>
+          <input type="text" class="form-control" id="lf-category" placeholder="e.g. Grade 5 / Enterprise / $500k budget">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" class="form-control" id="lf-phone" placeholder="+91 98765 00000">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" class="form-control" id="lf-email" placeholder="contact@email.com">
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" class="form-control" id="lf-date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Pipeline Stage *</label>
+          <select class="form-control" id="lf-status" required>
+            <option value="inquiry">Inquiry</option>
+            <option value="contacted">Contacted</option>
+            <option value="visit-scheduled">Meeting Booked</option>
+            <option value="registered">Proposal Sent</option>
+            <option value="enrolled">Converted</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select class="form-control" id="lf-priority">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea class="form-control" id="lf-notes" rows="3" placeholder="Any additional notes…"></textarea>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('lead-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="lead-submit-btn">Save Contact</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Campaign Modal -->
+<dialog class="modal" id="campaign-modal">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h2 id="campaign-modal-title">Add Campaign</h2>
+      <button class="modal-close" onclick="closeModal('campaign-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="campaign-form" onsubmit="submitCampaign(event)">
+      <input type="hidden" id="cf-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Campaign Name *</label>
+          <input type="text" class="form-control" id="cf-name" required placeholder="e.g. Google Ads – Summer Push">
+        </div>
+        <div class="form-group">
+          <label>Channel / Source *</label>
+          <select class="form-control" id="cf-source" required>
+            <option value="Google Ads">Google Ads</option>
+            <option value="Facebook Ads">Facebook Ads</option>
+            <option value="Instagram Ads">Instagram Ads</option>
+            <option value="LinkedIn Ads">LinkedIn Ads</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Referral">Referral</option>
+            <option value="Organic / SEO">Organic / SEO</option>
+            <option value="Email Marketing">Email Marketing</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Budget Spent ($) *</label>
+          <input type="number" class="form-control" id="cf-spend" required placeholder="500" min="0">
+        </div>
+        <div class="form-group">
+          <label>Leads Generated</label>
+          <input type="number" class="form-control" id="cf-leads" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Conversion Rate (%)</label>
+          <input type="number" class="form-control" id="cf-conv" placeholder="0" step="0.1" min="0" max="100">
+        </div>
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" class="form-control" id="cf-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-control" id="cf-status">
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="ended">Ended</option>
+        </select>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('campaign-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Campaign</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Task Modal -->
+<dialog class="modal" id="task-modal">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h2 id="task-modal-title">Add Task</h2>
+      <button class="modal-close" onclick="closeModal('task-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="task-form" onsubmit="submitTask(event)">
+      <input type="hidden" id="tf-id">
+      <div class="form-group">
+        <label>Task Description *</label>
+        <input type="text" class="form-control" id="tf-text" required placeholder="e.g. Follow up with Ramesh Kumar">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Priority</label>
+          <select class="form-control" id="tf-priority">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" class="form-control" id="tf-due">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('task-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Task</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Content Modal -->
+<dialog class="modal" id="content-modal">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h2>Schedule Content</h2>
+      <button class="modal-close" onclick="closeModal('content-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="content-form" onsubmit="submitContent(event)">
+      <input type="hidden" id="ctf-id">
+      <div class="form-group">
+        <label>Content Title *</label>
+        <input type="text" class="form-control" id="ctf-title" required placeholder="e.g. Summer Admissions Reel">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Channel *</label>
+          <select class="form-control" id="ctf-channel" required>
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="youtube">YouTube</option>
+            <option value="blog">Blog / Article</option>
+            <option value="email">Email</option>
+            <option value="ad">Paid Ad</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Publish Date *</label>
+          <input type="date" class="form-control" id="ctf-date" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-control" id="ctf-status">
+          <option value="planned">Planned</option>
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea class="form-control" id="ctf-notes" rows="3" placeholder="Brief, hooks, CTA…"></textarea>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('content-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Staff Modal -->
+<dialog class="modal" id="staff-modal">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h2 id="staff-modal-title">Add Staff Member</h2>
+      <button class="modal-close" onclick="closeModal('staff-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="staff-form" onsubmit="submitStaff(event)">
+      <input type="hidden" id="sf-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" class="form-control" id="sf-name" required placeholder="e.g. Meera Sen">
+        </div>
+        <div class="form-group">
+          <label>Role / Title</label>
+          <input type="text" class="form-control" id="sf-role" placeholder="e.g. Coordinator">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Conversions / Deals Closed</label>
+          <input type="number" class="form-control" id="sf-conv" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Target</label>
+          <input type="number" class="form-control" id="sf-target" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('staff-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Confirm Delete Modal -->
+<dialog class="modal" id="confirm-modal">
+  <div class="modal-inner" style="max-width:400px;">
+    <div class="modal-head">
+      <h2>Confirm Delete</h2>
+      <button class="modal-close" onclick="closeModal('confirm-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p style="padding:0 0 20px; color:var(--text-2); font-size:14px;" id="confirm-msg">Are you sure? This cannot be undone.</p>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Delete</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
