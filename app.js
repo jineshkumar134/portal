@@ -180,23 +180,34 @@ function renderAll() {
   renderAnalytics();
 }
 
-// ─── Sidebar & Navigation ─────────────────────────────────────────
+// ─── Sidebar & Navigation ──────────────────────────────────────────────────
 function initSidebar() {
-  const sidebar = document.getElementById('sidebar');
+  const sidebar   = document.getElementById('sidebar');
   const hamburger = document.getElementById('hamburger');
+  const backdrop  = document.getElementById('sidebar-backdrop');
+
+  function openSidebar() {
+    sidebar.classList.add('sidebar-open');
+    backdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('sidebar-open');
+    backdrop.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
   hamburger.addEventListener('click', () => {
-    sidebar.classList.toggle('sidebar-open');
-    document.body.classList.toggle('sidebar-active');
-  });
-  // Close on outside click (mobile)
-  document.addEventListener('click', (e) => {
-    if (window.innerWidth <= 768 && sidebar.classList.contains('sidebar-open')) {
-      if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-        sidebar.classList.remove('sidebar-open');
-        document.body.classList.remove('sidebar-active');
-      }
+    if (sidebar.classList.contains('sidebar-open')) {
+      closeSidebar();
+    } else {
+      openSidebar();
     }
   });
+
+  // Tap backdrop to close
+  backdrop.addEventListener('click', closeSidebar);
 }
 
 function initRouter() {
@@ -220,7 +231,8 @@ function nav(viewId) {
   // Close sidebar on mobile after nav
   if (window.innerWidth <= 768) {
     document.getElementById('sidebar').classList.remove('sidebar-open');
-    document.body.classList.remove('sidebar-active');
+    document.getElementById('sidebar-backdrop').classList.remove('active');
+    document.body.style.overflow = '';
   }
 }
 

@@ -69,9 +69,24 @@ img { max-width: 100%; }
   flex-direction: column;
   position: fixed;
   top: 0; left: 0; bottom: 0;
-  z-index: 200;
-  transition: transform var(--transition);
+  z-index: 300;
+  transition: transform .22s cubic-bezier(.4,0,.2,1);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Backdrop behind sidebar on mobile */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 299;
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+.sidebar-backdrop.active {
+  opacity: 1;
 }
 
 .sidebar-brand {
@@ -137,6 +152,7 @@ img { max-width: 100%; }
   flex-direction: column;
   min-height: 100vh;
   min-width: 0;
+  width: calc(100% - var(--sidebar-w));
 }
 
 /* ─── Topbar ─────────────────────────────────────────────────── */
@@ -146,9 +162,11 @@ img { max-width: 100%; }
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding: 0 24px;
   position: sticky; top: 0; z-index: 100;
+  width: 100%;
+  overflow: hidden;
 }
 .hamburger {
   display: flex; align-items: center; justify-content: center;
@@ -685,36 +703,113 @@ dialog.modal::backdrop { background: rgba(15,23,42,.5); backdrop-filter: blur(4p
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* ── Tablet ── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 220px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .page-container { padding: 20px; }
+}
+
+/* ── Mobile / Tablet (<= 768px) ── */
 @media (max-width: 768px) {
+  /* Sidebar slides in from left, hidden by default */
   .sidebar {
     transform: translateX(-100%);
+    width: 260px;
   }
   .sidebar.sidebar-open {
     transform: translateX(0);
+    box-shadow: 4px 0 30px rgba(0,0,0,.35);
   }
-  .main-wrapper { margin-left: 0; }
+  .sidebar-backdrop {
+    display: block;
+  }
 
-  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  /* Main wrapper takes full width */
+  .main-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* Topbar */
+  .topbar { padding: 0 14px; gap: 8px; }
+
+  /* Hide search bar on small screens, show icon only */
+  .topbar-search {
+    display: none;
+  }
+
+  /* Logout text hidden, show icon only */
+  #logout-btn span { display: none; }
+
+  /* Grids */
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
   .two-col { grid-template-columns: 1fr; }
   .roi-grid { grid-template-columns: 1fr 1fr; }
   .form-row { grid-template-columns: 1fr; }
-  .page-container { padding: 16px; }
-  .topbar { padding: 0 16px; }
-  .view-header { flex-wrap: wrap; }
-  .kanban-col { flex: 0 0 200px; }
+
+  /* Page */
+  .page-container { padding: 14px; }
+  .view-header { flex-wrap: wrap; gap: 10px; }
+  .view-header h1 { font-size: 20px; }
+
+  /* Kanban — horizontal scroll */
+  .kanban {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+  }
+  .kanban-col { flex: 0 0 260px; }
+
+  /* Modals — centered, near full-width */
   dialog.modal {
-    max-width: 95vw;
+    max-width: 94vw;
+    width: 94vw;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     margin: 0;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   .modal-inner { padding: 16px; }
+
+  /* Campaign cards */
+  .campaigns-grid { grid-template-columns: 1fr; }
+
+  /* Staff list */
+  .staff-row { flex-wrap: wrap; gap: 8px; }
+
+  /* Toast */
+  .toast {
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    text-align: center;
+  }
+
+  /* Auth card */
+  .auth-card {
+    padding: 24px 18px;
+    max-width: 100%;
+  }
+
+  /* Tables — horizontal scroll */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 600px; }
 }
 
+/* ── Small Mobile (<= 480px) ── */
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }
   .camp-metrics { flex-direction: column; }
+  .roi-grid { grid-template-columns: 1fr; }
+  .view-header { flex-direction: column; align-items: flex-start; }
+  .view-header .btn { align-self: flex-start; }
+  .kanban-col { flex: 0 0 240px; }
+  .auth-card { padding: 20px 14px; }
 }
 
 /* ─── Authentication Overlay ─── */
