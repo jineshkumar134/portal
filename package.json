@@ -2,9 +2,9 @@
   "name": "school-growth-system",
   "version": "1.0.0",
   "description": "Full-stack School Growth System with MongoDB and Groq AI",
-  "main": "server.js",
+  "main": "api/index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node api/index.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -6,28 +6,40 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'admission_portal_secret_key_123';
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
 
 // ─── MongoDB Connection ──────────────────────────────────────────────────────
-mongoose.connect(process.env.MONGODB_URI)
-  .then(async () => {
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) return;
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    isConnected = true;
     console.log('Connected to MongoDB Atlas.');
-    // Ensure a blank config document exists
+    
+    // Ensure config document exists
     const count = await Config.countDocuments();
     if (count === 0) {
       await Config.create({ businessName: 'Admission Portal', targetValue: 300, businessType: 'school', npsScore: 0 });
-      console.log('Blank config initialised.');
     }
-  })
-  .catch(err => console.error('MongoDB connection error:', err));
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+  }
+};
+
+// Connect to DB immediately
+connectDB();
+
+// Middleware to ensure DB is connected before handling requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
-
 const toJSON = {
   transform: (_, ret) => {
     ret.id = ret._id.toString();
@@ -36,7 +48,6 @@ const toJSON = {
   }
 };
 
-// User / Account
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -45,7 +56,6 @@ const UserSchema = new mongoose.Schema({
 UserSchema.set('toJSON', toJSON);
 const User = mongoose.model('User', UserSchema);
 
-// Lead / Contact (linked to userId)
 const LeadSchema = new mongoose.Schema({
   name:      { type: String, required: true },
   secondary: { type: String, default: '' },
@@ -54,14 +64,13 @@ const LeadSchema = new mongoose.Schema({
   email:     { type: String, default: '' },
   notes:     { type: String, default: '' },
   status:    { type: String, required: true, default: 'inquiry' },
-  priority:  { type: String, default: 'medium' }, // high / medium / low
+  priority:  { type: String, default: 'medium' },
   date:      { type: String, required: true },
   owner:     { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 LeadSchema.set('toJSON', toJSON);
 const Lead = mongoose.model('Lead', LeadSchema);
 
-// Campaign / Marketing Activity (linked to userId)
 const CampaignSchema = new mongoose.Schema({
   name:       { type: String, required: true },
   spend:      { type: Number, required: true },
@@ -69,24 +78,22 @@ const CampaignSchema = new mongoose.Schema({
   leads:      { type: Number, default: 0 },
   conversion: { type: Number, default: 0 },
   startDate:  { type: String, default: '' },
-  status:     { type: String, default: 'active' }, // active / paused / ended
+  status:     { type: String, default: 'active' },
   owner:      { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 CampaignSchema.set('toJSON', toJSON);
 const Campaign = mongoose.model('Campaign', CampaignSchema);
 
-// Task (linked to userId)
 const TaskSchema = new mongoose.Schema({
   text:     { type: String, required: true },
   checked:  { type: Boolean, default: false },
-  priority: { type: String, default: 'medium' }, // high / medium / low
+  priority: { type: String, default: 'medium' },
   dueDate:  { type: String, default: '' },
   owner:    { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 TaskSchema.set('toJSON', toJSON);
 const Task = mongoose.model('Task', TaskSchema);
 
-// Config (linked to userId)
 const ConfigSchema = new mongoose.Schema({
   businessName: { type: String, default: 'Admission Portal' },
   businessType: { type: String, default: 'school' },
@@ -99,7 +106,6 @@ const ConfigSchema = new mongoose.Schema({
 ConfigSchema.set('toJSON', toJSON);
 const Config = mongoose.model('Config', ConfigSchema);
 
-// Staff Member (linked to userId)
 const StaffSchema = new mongoose.Schema({
   name:        { type: String, required: true },
   role:        { type: String, default: '' },
@@ -111,19 +117,18 @@ const StaffSchema = new mongoose.Schema({
 StaffSchema.set('toJSON', toJSON);
 const Staff = mongoose.model('Staff', StaffSchema);
 
-// Content Calendar Entry (linked to userId)
 const ContentSchema = new mongoose.Schema({
   title:   { type: String, required: true },
-  channel: { type: String, required: true }, // instagram / blog / youtube / ad / email
+  channel: { type: String, required: true },
   date:    { type: String, required: true },
   notes:   { type: String, default: '' },
-  status:  { type: String, default: 'planned' }, // planned / published / draft
+  status:  { type: String, default: 'planned' },
   owner:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 ContentSchema.set('toJSON', toJSON);
 const Content = mongoose.model('Content', ContentSchema);
 
-// ─── Authentication Middleware ───────────────────────────────────────────────
+// ─── Auth Middleware ─────────────────────────────────────────────────────────
 const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -141,7 +146,7 @@ const auth = async (req, res, next) => {
   }
 };
 
-// ─── Authentication Routes ───────────────────────────────────────────────────
+// ─── Auth Routes ─────────────────────────────────────────────────────────────
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -152,7 +157,6 @@ app.post('/api/auth/signup', async (req, res) => {
     user = new User({ name, email, password: hashedPassword });
     await user.save();
     
-    // Auto-create initial default settings config for this user
     await Config.create({ owner: user._id, businessName: 'Admission Portal', businessType: 'school', targetValue: 300 });
     
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -182,7 +186,7 @@ app.get('/api/auth/me', auth, async (req, res) => {
   res.json(req.user);
 });
 
-// ─── Config Routes (Authenticated & User-Scoped) ─────────────────────────────
+// ─── Config Routes ───────────────────────────────────────────────────────────
 app.get('/api/config', auth, async (req, res) => {
   try {
     let config = await Config.findOne({ owner: req.user._id });
@@ -205,7 +209,7 @@ app.put('/api/config', auth, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ─── Leads Routes (Authenticated & User-Scoped) ──────────────────────────────
+// ─── Leads Routes ────────────────────────────────────────────────────────────
 app.get('/api/leads', auth, async (req, res) => {
   try {
     const leads = await Lead.find({ owner: req.user._id }).sort({ createdAt: -1 });
@@ -241,7 +245,7 @@ app.delete('/api/leads/:id', auth, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ─── Campaigns Routes (Authenticated & User-Scoped) ──────────────────────────
+// ─── Campaigns Routes ────────────────────────────────────────────────────────
 app.get('/api/campaigns', auth, async (req, res) => {
   try {
     const camps = await Campaign.find({ owner: req.user._id }).sort({ createdAt: -1 });
@@ -273,7 +277,7 @@ app.delete('/api/campaigns/:id', auth, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ─── Tasks Routes (Authenticated & User-Scoped) ──────────────────────────────
+// ─── Tasks Routes ────────────────────────────────────────────────────────────
 app.get('/api/tasks', auth, async (req, res) => {
   try {
     const tasks = await Task.find({ owner: req.user._id }).sort({ createdAt: -1 });
@@ -305,7 +309,7 @@ app.delete('/api/tasks/:id', auth, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ─── Staff Routes (Authenticated & User-Scoped) ──────────────────────────────
+// ─── Staff Routes ────────────────────────────────────────────────────────────
 app.get('/api/staff', auth, async (req, res) => {
   try {
     const staff = await Staff.find({ owner: req.user._id }).sort({ conversions: -1 });
@@ -337,7 +341,7 @@ app.delete('/api/staff/:id', auth, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ─── Content Routes (Authenticated & User-Scoped) ────────────────────────────
+// ─── Content Calendar Routes ──────────────────────────────────────────────────
 app.get('/api/content', auth, async (req, res) => {
   try {
     const items = await Content.find({ owner: req.user._id }).sort({ date: 1 });
@@ -369,7 +373,7 @@ app.delete('/api/content/:id', auth, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ─── Summary Route (Authenticated & User-Scoped) ─────────────────────────────
+// ─── Summary Route ───────────────────────────────────────────────────────────
 app.get('/api/summary', auth, async (req, res) => {
   try {
     const [leads, campaigns, tasks, config] = await Promise.all([
@@ -394,7 +398,7 @@ app.get('/api/summary', auth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ─── Groq AI Insights Route (Authenticated & User-Scoped) ────────────────────
+// ─── Groq AI Insights Route ──────────────────────────────────────────────────
 app.get('/api/ai-insights', auth, async (req, res) => {
   try {
     const [leads, config] = await Promise.all([
@@ -447,6 +451,10 @@ NPS Score: ${cfg.npsScore || 0}`
   }
 });
 
-app.get('*', (req, res) => res.sendFile(__dirname + '/index.html'));
+// Standalone server boot (skipped in Serverless environments)
+if (process.env.NODE_ENV !== 'production' && require.main === module) {
+  const PORT = process.env.PORT || 8080;
+  app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+}
 
-app.listen(PORT, () => console.log(`Admission Portal running at http://localhost:${PORT}`));
+module.exports = app;
