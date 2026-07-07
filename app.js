@@ -47,10 +47,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
   if (token) {
     try {
-      await GET('/api/auth/me');
+      const user = await GET('/api/auth/me');
+      localStorage.setItem('user', JSON.stringify(user));
       document.body.classList.remove('auth-required');
       document.body.classList.add('authenticated');
       await loadAll();
+      applyUser(user);
       fetchAI();
     } catch (e) {
       handleLogout();
@@ -79,10 +81,12 @@ async function handleLogin(e) {
   try {
     const res = await POST('/api/auth/login', { email, password });
     localStorage.setItem('token', res.token);
+    localStorage.setItem('user', JSON.stringify(res.user));
     document.body.classList.remove('auth-required');
     document.body.classList.add('authenticated');
-    toast('Welcome back!');
+    toast('Welcome back, ' + res.user.name.split(' ')[0] + '!');
     await loadAll();
+    applyUser(res.user);
     fetchAI();
   } catch (err) {
     let errMsg = 'Login failed';
@@ -104,10 +108,12 @@ async function handleSignup(e) {
   try {
     const res = await POST('/api/auth/signup', { name, email, password });
     localStorage.setItem('token', res.token);
+    localStorage.setItem('user', JSON.stringify(res.user));
     document.body.classList.remove('auth-required');
     document.body.classList.add('authenticated');
-    toast('Account created successfully!');
+    toast('Welcome, ' + res.user.name.split(' ')[0] + '! Account created.');
     await loadAll();
+    applyUser(res.user);
     fetchAI();
   } catch (err) {
     let errMsg = 'Signup failed';
@@ -123,6 +129,7 @@ async function handleSignup(e) {
 
 function handleLogout() {
   localStorage.removeItem('token');
+  localStorage.removeItem('user');
   document.body.classList.remove('authenticated');
   document.body.classList.add('auth-required');
 }
@@ -138,6 +145,9 @@ async function loadAll() {
       GET('/api/config'),
     ]);
     applyConfig();
+    // Restore user info from localStorage (set on login/signup)
+    const stored = localStorage.getItem('user');
+    if (stored) { try { applyUser(JSON.parse(stored)); } catch(_) {} }
     renderAll();
   } catch (e) {
     toast('Failed to load data: ' + e.message, 'error');
@@ -149,10 +159,6 @@ function applyConfig() {
   const name = c.businessName || 'Admission Portal';
   const type = c.businessType || 'school';
   set('sidebar-brand-name', name);
-  set('sidebar-biz-name', name);
-  set('sidebar-biz-type', capitalize(type));
-  set('sidebar-avatar', name[0] || 'A');
-  set('topbar-avatar', name[0] || 'A');
   set('dash-heading', name + ' Dashboard');
   set('page-title', name + ' — Admission Portal');
   document.title = name + ' — Admission Portal';
@@ -167,6 +173,23 @@ function applyConfig() {
 
   // brand
   val('brand-tagline', c.tagline || '');
+}
+
+// Apply logged-in user's name/avatar everywhere
+function applyUser(user) {
+  if (!user) return;
+  const initials = user.name
+    ? user.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()
+    : '?';
+  const firstName = user.name ? user.name.split(' ')[0] : 'User';
+
+  // Topbar avatar
+  set('topbar-avatar', initials);
+
+  // Sidebar footer
+  set('sidebar-avatar', initials);
+  set('sidebar-biz-name', user.name || '');
+  set('sidebar-biz-type', user.email || '');
 }
 
 function renderAll() {
