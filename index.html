@@ -82,7 +82,7 @@
       <i class="fa-solid fa-address-book"></i><span>All Contacts</span>
     </a>
     <a href="#" class="nav-link" data-view="campaigns">
-      <i class="fa-solid fa-bullhorn"></i><span>Lead Campaigns</span>
+      <i class="fa-solid fa-chart-line"></i><span>Marketing</span>
     </a>
     <a href="#" class="nav-link" data-view="tasks">
       <i class="fa-solid fa-list-check"></i><span>Tasks</span>
@@ -345,52 +345,211 @@
     </div>
   </section>
 
-  <!-- ════════════════════  CAMPAIGNS  ════════════════════ -->
+  <!-- ════════════════════  MARKETING  ════════════════════ -->
   <section class="view hidden" id="view-campaigns">
     <div class="view-header">
       <div>
-        <h1>Lead Campaigns</h1>
-        <p class="view-sub">Track every paid or organic marketing campaign.</p>
+        <h1>Marketing</h1>
+        <p class="view-sub">Track paid campaigns and grow organically with SEO & content.</p>
       </div>
-      <button class="btn btn-primary" onclick="openModal('campaign-modal')">
-        <i class="fa-solid fa-plus"></i> Add Campaign
+    </div>
+
+    <!-- Tab Switcher -->
+    <div class="mkt-tabs">
+      <button id="mkt-tab-paid" class="mkt-tab active" onclick="switchMktTab('paid')">
+        <i class="fa-solid fa-bullhorn"></i> Paid Marketing
+      </button>
+      <button id="mkt-tab-organic" class="mkt-tab" onclick="switchMktTab('organic')">
+        <i class="fa-solid fa-seedling"></i> Organic Marketing
       </button>
     </div>
 
-    <!-- ROI Calculator -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-head"><h3>ROI Simulator</h3></div>
-      <div class="roi-grid">
-        <div class="form-group">
-          <label>Budget ($)</label>
-          <input type="number" class="form-control" id="roi-budget" value="" placeholder="e.g. 5000" oninput="calcROI()">
+    <!-- ─── PAID MARKETING PANE ─── -->
+    <div id="mkt-pane-paid">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 12px;">
+        <h3 style="font-size:15px;font-weight:700;">Paid Campaigns</h3>
+        <button class="btn btn-primary" onclick="openModal('campaign-modal')">
+          <i class="fa-solid fa-plus"></i> Add Campaign
+        </button>
+      </div>
+
+      <!-- ROI Calculator -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-head"><h3>ROI Simulator</h3></div>
+        <div class="roi-grid">
+          <div class="form-group">
+            <label>Budget ($)</label>
+            <input type="number" class="form-control" id="roi-budget" value="" placeholder="e.g. 5000" oninput="calcROI()">
+          </div>
+          <div class="form-group">
+            <label>Cost Per Lead ($)</label>
+            <input type="number" class="form-control" id="roi-cpl" value="" placeholder="e.g. 15" oninput="calcROI()">
+          </div>
+          <div class="form-group">
+            <label>Conversion Rate (%)</label>
+            <input type="number" class="form-control" id="roi-conv" value="" placeholder="e.g. 10" oninput="calcROI()">
+          </div>
+          <div class="roi-result">
+            <div class="roi-stat"><span>Est. Leads</span><strong id="roi-out-leads">—</strong></div>
+            <div class="roi-stat"><span>Est. Deals</span><strong id="roi-out-deals">—</strong></div>
+            <div class="roi-stat"><span>Cost / Deal</span><strong id="roi-out-cpa">—</strong></div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Cost Per Lead ($)</label>
-          <input type="number" class="form-control" id="roi-cpl" value="" placeholder="e.g. 15" oninput="calcROI()">
-        </div>
-        <div class="form-group">
-          <label>Conversion Rate (%)</label>
-          <input type="number" class="form-control" id="roi-conv" value="" placeholder="e.g. 10" oninput="calcROI()">
-        </div>
-        <div class="roi-result">
-          <div class="roi-stat"><span>Est. Leads</span><strong id="roi-out-leads">—</strong></div>
-          <div class="roi-stat"><span>Est. Deals</span><strong id="roi-out-deals">—</strong></div>
-          <div class="roi-stat"><span>Cost / Deal</span><strong id="roi-out-cpa">—</strong></div>
-        </div>
+      </div>
+
+      <div class="campaigns-grid" id="campaigns-grid"></div>
+      <div class="empty-state" id="campaigns-empty" style="display:none;">
+        <i class="fa-solid fa-bullhorn"></i>
+        <h3>No paid campaigns yet</h3>
+        <p>Add your first paid campaign — Google Ads, Facebook, Instagram, etc.</p>
+        <button class="btn btn-primary" onclick="openModal('campaign-modal')"><i class="fa-solid fa-plus"></i> Add Campaign</button>
       </div>
     </div>
 
-    <div class="campaigns-grid" id="campaigns-grid">
-      <!-- Cards rendered by JS -->
-    </div>
-    <div class="empty-state" id="campaigns-empty" style="display:none;">
-      <i class="fa-solid fa-bullhorn"></i>
-      <h3>No campaigns yet</h3>
-      <p>Add your first marketing campaign to start tracking ROI.</p>
-      <button class="btn btn-primary" onclick="openModal('campaign-modal')"><i class="fa-solid fa-plus"></i> Add Campaign</button>
+    <!-- ─── ORGANIC MARKETING PANE ─── -->
+    <div id="mkt-pane-organic" class="hidden">
+
+      <!-- SEO Stats Row -->
+      <div class="kpi-grid" style="margin:16px 0 12px;">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#f974161a;color:#f97316;"><i class="fa-solid fa-magnifying-glass"></i></div>
+          <div class="kpi-body"><div class="kpi-value" id="seo-stat-total">0</div><div class="kpi-label">Total SEO Tasks</div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#22c55e1a;color:#22c55e;"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="kpi-body"><div class="kpi-value" id="seo-stat-done">0</div><div class="kpi-label">Completed</div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#3b82f61a;color:#3b82f6;"><i class="fa-solid fa-spinner"></i></div>
+          <div class="kpi-body"><div class="kpi-value" id="seo-stat-prog">0</div><div class="kpi-label">In Progress</div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#a855f71a;color:#a855f7;"><i class="fa-solid fa-clock"></i></div>
+          <div class="kpi-body"><div class="kpi-value" id="seo-stat-todo">0</div><div class="kpi-label">To Do</div></div>
+        </div>
+      </div>
+
+      <!-- SEO Progress Bar -->
+      <div class="card" style="margin-bottom:14px;padding:16px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-weight:600;font-size:13px;">Overall SEO Progress</span>
+          <span style="font-weight:700;color:#22c55e;" id="seo-progress-pct">0%</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="seo-progress-bar" style="width:0%"></div></div>
+      </div>
+
+      <!-- SEO Tasks Section -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-head">
+          <h3><i class="fa-solid fa-magnifying-glass" style="color:#f97316;"></i> SEO Tracker</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddSeoTask()">
+            <i class="fa-solid fa-plus"></i> Add Task
+          </button>
+        </div>
+        <div class="table-toolbar">
+          <select class="form-select" id="seo-cat-filter" onchange="renderSeoList()">
+            <option value="">All Categories</option>
+            <option value="local-seo">Local SEO</option>
+            <option value="on-page">On-Page SEO</option>
+            <option value="ai-search">AI / ChatGPT</option>
+            <option value="backlinks">Backlinks</option>
+            <option value="social">Social Content</option>
+          </select>
+          <select class="form-select" id="seo-st-filter" onchange="renderSeoList()">
+            <option value="">All Status</option>
+            <option value="todo">To Do</option>
+            <option value="in-progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div id="seo-tasks-list"></div>
+        <div class="empty-state" id="seo-tasks-empty" style="display:none;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <h3>No SEO tasks yet</h3>
+          <p>Add Local SEO, On-Page, AI/ChatGPT optimization tasks to track your organic growth.</p>
+          <button class="btn btn-primary" onclick="openAddSeoTask()"><i class="fa-solid fa-plus"></i> Add SEO Task</button>
+        </div>
+      </div>
+
+      <!-- Organic Content Section -->
+      <div class="card">
+        <div class="card-head">
+          <h3><i class="fa-solid fa-seedling" style="color:#22c55e;"></i> Organic Content Schedule</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddOrganicContent()">
+            <i class="fa-solid fa-plus"></i> Add Content
+          </button>
+        </div>
+        <p style="font-size:12px;color:#64748b;padding:0 0 10px;">Blog posts, Instagram, YouTube, Shorts — pulled from your Content Calendar.</p>
+        <div id="organic-content-list"></div>
+        <div class="empty-state" id="organic-content-empty" style="display:none;">
+          <i class="fa-solid fa-pen-nib"></i>
+          <h3>No organic content yet</h3>
+          <p>Plan blog posts, Instagram reels, YouTube videos for organic reach.</p>
+          <button class="btn btn-primary" onclick="openAddOrganicContent()"><i class="fa-solid fa-plus"></i> Add Content</button>
+        </div>
+      </div>
     </div>
   </section>
+
+  <!-- SEO Task Modal -->
+  <dialog class="modal" id="seo-modal">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <h3 class="modal-title" id="seo-modal-title">Add SEO Task</h3>
+        <button class="modal-close" onclick="closeModal('seo-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="seo-form" onsubmit="submitSeoTask(event)">
+        <input type="hidden" id="seo-id">
+        <div class="form-group">
+          <label>Task Title *</label>
+          <input class="form-control" id="seo-title" placeholder="e.g. Optimise Google Business Profile" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select class="form-control" id="seo-cat">
+              <option value="local-seo">📍 Local SEO</option>
+              <option value="on-page">📄 On-Page SEO</option>
+              <option value="ai-search">🤖 AI / ChatGPT Optimization</option>
+              <option value="backlinks">🔗 Backlinks</option>
+              <option value="social">📱 Social Content</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select class="form-control" id="seo-priority">
+              <option value="high">🔴 High</option>
+              <option value="medium" selected>🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select class="form-control" id="seo-status">
+              <option value="todo">To Do</option>
+              <option value="in-progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Target Keyword (optional)</label>
+            <input class="form-control" id="seo-keyword" placeholder="e.g. best school near me">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea class="form-control" id="seo-notes" rows="2" placeholder="Any details, links, or context..."></textarea>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('seo-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
 
   <!-- ════════════════════  TASKS  ════════════════════ -->
   <section class="view hidden" id="view-tasks">

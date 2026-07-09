@@ -128,6 +128,19 @@ const ContentSchema = new mongoose.Schema({
 ContentSchema.set('toJSON', toJSON);
 const Content = mongoose.model('Content', ContentSchema);
 
+const SeoTaskSchema = new mongoose.Schema({
+  title:    { type: String, required: true },
+  category: { type: String, default: 'local-seo' }, // local-seo | on-page | ai-search | backlinks | social
+  status:   { type: String, default: 'todo' },        // todo | in-progress | done
+  priority: { type: String, default: 'medium' },      // high | medium | low
+  notes:    { type: String, default: '' },
+  keyword:  { type: String, default: '' },            // target keyword if relevant
+  owner:    { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+}, { timestamps: true });
+SeoTaskSchema.set('toJSON', toJSON);
+const SeoTask = mongoose.model('SeoTask', SeoTaskSchema);
+
+
 // ─── Auth Middleware ─────────────────────────────────────────────────────────
 const auth = async (req, res, next) => {
   try {
@@ -373,7 +386,40 @@ app.delete('/api/content/:id', auth, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
+// ─── SEO Tasks Routes ─────────────────────────────────────────────────────────
+app.get('/api/seo', auth, async (req, res) => {
+  try {
+    const items = await SeoTask.find({ owner: req.user._id }).sort({ createdAt: -1 });
+    res.json(items);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/seo', auth, async (req, res) => {
+  try {
+    const item = new SeoTask({ ...req.body, owner: req.user._id });
+    await item.save();
+    res.status(201).json(item);
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.put('/api/seo/:id', auth, async (req, res) => {
+  try {
+    const item = await SeoTask.findOneAndUpdate({ _id: req.params.id, owner: req.user._id }, req.body, { new: true });
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    res.json(item);
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete('/api/seo/:id', auth, async (req, res) => {
+  try {
+    const item = await SeoTask.findOneAndDelete({ _id: req.params.id, owner: req.user._id });
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
 // ─── Summary Route ───────────────────────────────────────────────────────────
+
 app.get('/api/summary', auth, async (req, res) => {
   try {
     const [leads, campaigns, tasks, config] = await Promise.all([

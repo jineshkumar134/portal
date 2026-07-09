@@ -6,13 +6,14 @@
 
 // ─── Global State ────────────────────────────────────────────────
 const S = {
-  leads: [], campaigns: [], tasks: [], staff: [], content: [],
+  leads: [], campaigns: [], tasks: [], staff: [], content: [], seo: [],
   config: {},
   charts: {},
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(),
   dragId: null,
   dragStatus: null,
+  mktTab: 'paid',   // 'paid' | 'organic'
 };
 
 // ─── API Helpers ─────────────────────────────────────────────────
@@ -136,13 +137,14 @@ function handleLogout() {
 
 async function loadAll() {
   try {
-    [S.leads, S.campaigns, S.tasks, S.staff, S.content, S.config] = await Promise.all([
+    [S.leads, S.campaigns, S.tasks, S.staff, S.content, S.config, S.seo] = await Promise.all([
       GET('/api/leads'),
       GET('/api/campaigns'),
       GET('/api/tasks'),
       GET('/api/staff'),
       GET('/api/content'),
       GET('/api/config'),
+      GET('/api/seo'),
     ]);
     applyConfig();
     // Restore user info from localStorage (set on login/signup)
@@ -196,7 +198,7 @@ function renderAll() {
   renderDashboard();
   renderKanban();
   renderLeadsTable();
-  renderCampaigns();
+  renderMarketing();
   renderTasks();
   renderContent();
   renderStaff();
@@ -529,7 +531,243 @@ async function deleteLead(id) {
 }
 
 // ─── Campaigns ───────────────────────────────────────────────────
+// ─── Marketing (Paid + Organic) ───────────────────────────────────
+function renderMarketing() {
+  // Keep active tab in sync
+  switchMktTab(S.mktTab, false);
+}
+
+function switchMktTab(tab, save = true) {
+  if (save) S.mktTab = tab;
+  ['paid','organic'].forEach(t => {
+    const btn = document.getElementById(`mkt-tab-${t}`);
+    const pane = document.getElementById(`mkt-pane-${t}`);
+    if (btn)  btn.classList.toggle('active', t === tab);
+    if (pane) pane.classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'paid')    renderCampaigns();
+  if (tab === 'organic') renderOrganic();
+}
+
+// ─── Organic Marketing ────────────────────────────────────────────
+const SEO_CATS = {
+  'local-seo':  { label: 'Local SEO',       icon: 'fa-map-pin',        color: '#f97316' },
+  'on-page':    { label: 'On-Page SEO',     icon: 'fa-file-code',      color: '#3b82f6' },
+  'ai-search':  { label: 'AI / ChatGPT',    icon: 'fa-robot',          color: '#a855f7' },
+  'backlinks':  { label: 'Backlinks',        icon: 'fa-link',           color: '#22c55e' },
+  'social':     { label: 'Social Content',  icon: 'fa-hashtag',        color: '#ec4899' },
+};
+const SEO_STATUS = {
+  'todo':        { label: 'To Do',       cls: 'badge-gray'    },
+  'in-progress': { label: 'In Progress', cls: 'badge-blue'    },
+  'done':        { label: 'Done',        cls: 'badge-green'   },
+};
+const SEO_PRIORITY = {
+  high:   { label: 'High',   cls: 'badge-danger'  },
+  medium: { label: 'Medium', cls: 'badge-warning' },
+  low:    { label: 'Low',    cls: 'badge-gray'    },
+};
+
+function renderOrganic() {
+  renderSeoStats();
+  renderSeoList();
+  renderOrganicContent();
+}
+
+function renderSeoStats() {
+  const total  = S.seo.length;
+  const done   = S.seo.filter(s => s.status === 'done').length;
+  const inProg = S.seo.filter(s => s.status === 'in-progress').length;
+  const todo   = S.seo.filter(s => s.status === 'todo').length;
+  set('seo-stat-total',  total);
+  set('seo-stat-done',   done);
+  set('seo-stat-prog',   inProg);
+  set('seo-stat-todo',   todo);
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  set('seo-progress-pct', pct + '%');
+  const bar = document.getElementById('seo-progress-bar');
+  if (bar) bar.style.width = pct + '%';
+}
+
+function renderSeoList() {
+  const container = document.getElementById('seo-tasks-list');
+  const empty     = document.getElementById('seo-tasks-empty');
+  const catFilter = document.getElementById('seo-cat-filter')?.value || '';
+  const stFilter  = document.getElementById('seo-st-filter')?.value  || '';
+
+  let items = [...S.seo];
+  if (catFilter) items = items.filter(s => s.category === catFilter);
+  if (stFilter)  items = items.filter(s => s.status   === stFilter);
+
+  if (!items.length) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  container.innerHTML = items.map(s => {
+    const cat  = SEO_CATS[s.category]  || { label: s.category, icon: 'fa-circle-dot', color: '#64748b' };
+    const st   = SEO_STATUS[s.status]  || { label: s.status,  cls: 'badge-gray' };
+    const pr   = SEO_PRIORITY[s.priority] || { label: s.priority, cls: 'badge-gray' };
+    return `
+    <div class="seo-row ${s.status === 'done' ? 'seo-row-done' : ''}">
+      <span class="seo-cat-icon" style="color:${cat.color}"><i class="fa-solid ${cat.icon}"></i></span>
+      <div class="seo-row-main">
+        <div class="seo-row-title">${esc(s.title)}${s.keyword ? ` <span class="seo-keyword">${esc(s.keyword)}</span>` : ''}</div>
+        <div class="seo-row-meta">
+          <span class="badge ${st.cls}">${st.label}</span>
+          <span class="badge ${pr.cls}">${pr.label}</span>
+          <span class="seo-cat-label">${cat.label}</span>
+          ${s.notes ? `<span class="seo-notes-preview">${esc(s.notes)}</span>` : ''}
+        </div>
+      </div>
+      <div class="seo-row-actions">
+        ${s.status !== 'done'
+          ? `<button class="btn btn-sm btn-ghost" onclick="markSeoDone('${s.id}')" title="Mark Done"><i class="fa-solid fa-check"></i></button>`
+          : `<button class="btn btn-sm btn-ghost" onclick="markSeoTodo('${s.id}')" title="Reopen"><i class="fa-solid fa-rotate-left"></i></button>`
+        }
+        <button class="icon-btn-sm" onclick="editSeoTask('${s.id}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="icon-btn-sm danger" onclick="deleteSeoTask('${s.id}')"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOrganicContent() {
+  // Show blog, instagram, youtube from content calendar
+  const ORGANIC = ['blog','instagram','youtube','shorts','podcast'];
+  const organicItems = S.content
+    .filter(c => ORGANIC.includes(c.channel?.toLowerCase()))
+    .sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  const container = document.getElementById('organic-content-list');
+  const empty     = document.getElementById('organic-content-empty');
+  if (!container) return;
+
+  if (!organicItems.length) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const CHANNEL_ICONS = {
+    blog:      { icon: 'fa-pen-nib',      color: '#f97316' },
+    instagram: { icon: 'fa-instagram',    color: '#e1306c' },
+    youtube:   { icon: 'fa-youtube',      color: '#ff0000' },
+    shorts:    { icon: 'fa-film',         color: '#ff0000' },
+    podcast:   { icon: 'fa-microphone',   color: '#a855f7' },
+  };
+  const STATUS_CLS = { published: 'badge-green', planned: 'badge-blue', draft: 'badge-gray' };
+
+  container.innerHTML = organicItems.map(c => {
+    const ch  = CHANNEL_ICONS[c.channel?.toLowerCase()] || { icon: 'fa-circle-dot', color: '#64748b' };
+    const stCls = STATUS_CLS[c.status] || 'badge-gray';
+    return `
+    <div class="organic-content-row ${c.status === 'published' ? 'organic-published' : ''}">
+      <span class="seo-cat-icon" style="color:${ch.color}"><i class="fa-brands ${ch.icon}"></i></span>
+      <div class="seo-row-main">
+        <div class="seo-row-title">${esc(c.title)}</div>
+        <div class="seo-row-meta">
+          <span class="badge ${stCls}">${c.status}</span>
+          <span class="seo-cat-label">${c.channel}</span>
+          <span class="seo-notes-preview"><i class="fa-regular fa-calendar"></i> ${c.date}</span>
+          ${c.notes ? `<span class="seo-notes-preview">${esc(c.notes)}</span>` : ''}
+        </div>
+      </div>
+      <div class="seo-row-actions">
+        ${c.status !== 'published'
+          ? `<button class="btn btn-sm btn-ghost" onclick="markContentPublished('${c.id}')" title="Mark Published"><i class="fa-solid fa-check"></i></button>`
+          : ''
+        }
+        <button class="icon-btn-sm" onclick="editContent('${c.id}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="icon-btn-sm danger" onclick="deleteContent('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── SEO Task CRUD ────────────────────────────────────────────────
+function openAddSeoTask() {
+  set('seo-modal-title','Add SEO Task');
+  val('seo-id',''); val('seo-title',''); val('seo-cat','local-seo');
+  val('seo-status','todo'); val('seo-priority','medium');
+  val('seo-keyword',''); val('seo-notes','');
+  openModal('seo-modal');
+}
+
+function editSeoTask(id) {
+  const s = S.seo.find(x => x.id === id);
+  if (!s) return;
+  set('seo-modal-title','Edit SEO Task');
+  val('seo-id', s.id); val('seo-title', s.title);
+  val('seo-cat', s.category); val('seo-status', s.status);
+  val('seo-priority', s.priority); val('seo-keyword', s.keyword || '');
+  val('seo-notes', s.notes || '');
+  openModal('seo-modal');
+}
+
+async function submitSeoTask(e) {
+  e.preventDefault();
+  const id = gv('seo-id');
+  const payload = {
+    title: gv('seo-title'), category: gv('seo-cat'),
+    status: gv('seo-status'), priority: gv('seo-priority'),
+    keyword: gv('seo-keyword'), notes: gv('seo-notes'),
+  };
+  try {
+    if (id) { await PUT(`/api/seo/${id}`, payload); toast('SEO task updated!'); }
+    else    { await POST('/api/seo', payload);       toast('SEO task added!');   }
+    closeModal('seo-modal');
+    document.getElementById('seo-form').reset();
+    val('seo-id','');
+    S.seo = await GET('/api/seo');
+    renderOrganic();
+  } catch (err) { toast('Error: ' + err.message, 'error'); }
+}
+
+async function deleteSeoTask(id) {
+  confirm2('Delete this SEO task?', async () => {
+    await DEL(`/api/seo/${id}`);
+    toast('Deleted.');
+    S.seo = await GET('/api/seo');
+    renderOrganic();
+  });
+}
+
+async function markSeoDone(id) {
+  await PUT(`/api/seo/${id}`, { status: 'done' });
+  S.seo = await GET('/api/seo');
+  renderOrganic();
+  toast('Marked as done! ✓');
+}
+
+async function markSeoTodo(id) {
+  await PUT(`/api/seo/${id}`, { status: 'todo' });
+  S.seo = await GET('/api/seo');
+  renderOrganic();
+}
+
+async function markContentPublished(id) {
+  await PUT(`/api/content/${id}`, { status: 'published' });
+  S.content = await GET('/api/content');
+  renderOrganicContent();
+  renderContent();
+  toast('Marked as published! 🎉');
+}
+
+function openAddOrganicContent() {
+  // Pre-fill channel to Blog and open the content modal
+  set('content-modal-title','Add Organic Content');
+  val('calf-id',''); val('calf-title',''); val('calf-channel','blog');
+  val('calf-date', new Date().toISOString().split('T')[0]);
+  val('calf-status','planned'); val('calf-notes','');
+  openModal('cal-modal');
+}
+
 function renderCampaigns() {
+
   const grid  = document.getElementById('campaigns-grid');
   const empty = document.getElementById('campaigns-empty');
   if (!S.campaigns.length) {
