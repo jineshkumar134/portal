@@ -759,11 +759,12 @@ async function markContentPublished(id) {
 
 function openAddOrganicContent() {
   // Pre-fill channel to Blog and open the content modal
-  set('content-modal-title','Add Organic Content');
-  val('calf-id',''); val('calf-title',''); val('calf-channel','blog');
-  val('calf-date', new Date().toISOString().split('T')[0]);
-  val('calf-status','planned'); val('calf-notes','');
-  openModal('cal-modal');
+  const titleEl = document.getElementById('content-modal-title');
+  if (titleEl) titleEl.textContent = 'Add Organic Content';
+  val('ctf-id',''); val('ctf-title',''); val('ctf-channel','blog');
+  val('ctf-date', new Date().toISOString().split('T')[0]);
+  val('ctf-status','planned'); val('ctf-notes','');
+  openModal('content-modal');
 }
 
 function renderCampaigns() {
@@ -1000,9 +1001,23 @@ function renderCalendar() {
 function prevMonth() { if (calState.month === 0) { calState.month = 11; calState.year--; } else calState.month--; renderCalendar(); }
 function nextMonth() { if (calState.month === 11) { calState.month = 0; calState.year++; } else calState.month++; renderCalendar(); }
 
+function openAddContent() {
+  const titleEl = document.getElementById('content-modal-title');
+  if (titleEl) titleEl.textContent = 'Schedule Content';
+  val('ctf-id', '');
+  val('ctf-title', '');
+  val('ctf-channel', 'instagram');
+  val('ctf-date', new Date().toISOString().split('T')[0]);
+  val('ctf-status', 'planned');
+  val('ctf-notes', '');
+  openModal('content-modal');
+}
+
 function editContent(id) {
   const c = S.content.find(x => x.id === id);
   if (!c) return;
+  const titleEl = document.getElementById('content-modal-title');
+  if (titleEl) titleEl.textContent = 'Edit Content';
   val('ctf-id', c.id);
   val('ctf-title', c.title);
   val('ctf-channel', c.channel);

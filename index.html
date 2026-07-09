@@ -593,7 +593,7 @@
         <h1>Content Calendar</h1>
         <p class="view-sub">Plan and schedule your marketing content.</p>
       </div>
-      <button class="btn btn-primary" onclick="openModal('content-modal')">
+      <button class="btn btn-primary" onclick="openAddContent()">
         <i class="fa-solid fa-plus"></i> Schedule Content
       </button>
     </div>
@@ -614,7 +614,7 @@
           <i class="fa-solid fa-calendar-plus"></i>
           <h3>No content scheduled</h3>
           <p>Start planning your content calendar.</p>
-          <button class="btn btn-primary" onclick="openModal('content-modal')"><i class="fa-solid fa-plus"></i> Schedule</button>
+          <button class="btn btn-primary" onclick="openAddContent()"><i class="fa-solid fa-plus"></i> Schedule</button>
         </div>
       </div>
     </div>
@@ -957,7 +957,7 @@
 <dialog class="modal" id="content-modal">
   <div class="modal-inner">
     <div class="modal-head">
-      <h2>Schedule Content</h2>
+      <h2 id="content-modal-title">Schedule Content</h2>
       <button class="modal-close" onclick="closeModal('content-modal')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <form id="content-form" onsubmit="submitContent(event)">
