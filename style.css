@@ -707,6 +707,9 @@ dialog.modal {
   transform: translate(-50%, -50%);
   margin: 0;
 }
+dialog.modal.modal-sm {
+  max-width: 420px;
+}
 dialog.modal::backdrop { background: rgba(15,23,42,.5); backdrop-filter: blur(4px); }
 
 .modal-inner { padding: 24px; }
@@ -819,6 +822,10 @@ dialog.modal::backdrop { background: rgba(15,23,42,.5); backdrop-filter: blur(4p
     margin: 0;
     max-height: 90vh;
     overflow-y: auto;
+  }
+  dialog.modal.modal-sm {
+    max-width: 88vw;
+    width: 88vw;
   }
   .modal-inner { padding: 16px; }
 
