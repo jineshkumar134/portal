@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -10,6 +11,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'admission_portal_secret_key_123';
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from root directory
+app.use(express.static(path.join(__dirname, '..')));
+
+// Route to serve main index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 // ─── MongoDB Connection ──────────────────────────────────────────────────────
 let isConnected = false;
@@ -497,8 +506,8 @@ NPS Score: ${cfg.npsScore || 0}`
   }
 });
 
-// Standalone server boot (skipped in Serverless environments)
-if (process.env.NODE_ENV !== 'production' && require.main === module) {
+// Standalone server boot (skipped in Vercel Serverless environment)
+if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 8080;
   app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
 }
